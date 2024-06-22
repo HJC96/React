@@ -1,55 +1,54 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import './styles.css'
-import { useState } from 'react';
+import React, { useState } from 'react';
+import './styles.css';
 
 // Square 컴포넌트의 props 타입 정의
 interface SquareProps {
-  value: string;
+  value: string | null;
   onSquareClick: () => void;
 }
 
-// Board 컴포넌트 정의
-export default function Board() {
-  // 게임 보드의 상태를 관리하는 state
-  // 9개의 빈 문자열로 초기화된 배열
-  const [squares, setSquares] = useState<string[]>(Array(9).fill(''));
-  // 현재 플레이어가 X인지 여부를 관리하는 state
-  const [xIsNext, setXIsNext] = useState(true);
+// Square 컴포넌트 정의
+function Square({ value, onSquareClick }: SquareProps) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+}
 
-  // square 클릭 시 호출되는 함수
+// Board 컴포넌트의 props 타입 정의
+interface BoardProps {
+  xIsNext: boolean;
+  squares: Array<string | null>;
+  onPlay: (nextSquares: Array<string | null>) => void;
+}
+
+// Board 컴포넌트 정의
+function Board({ xIsNext, squares, onPlay }: BoardProps) {
   function handleClick(i: number) {
-    // 이미 채워진 칸이거나 승자가 결정된 경우 클릭 무시
-    if (squares[i] || calculateWinner(squares)) {
+    if (calculateWinner(squares) || squares[i]) {
       return;
     }
-    // squares 배열의 복사본 생성
     const nextSquares = squares.slice();
-    // 클릭된 square의 값을 현재 플레이어("X" 또는 "O")로 설정
-    nextSquares[i] = xIsNext ? "X" : "O";
-    // squares 상태 업데이트
-    setSquares(nextSquares);
-    // 다음 플레이어로 턴 변경
-    setXIsNext(!xIsNext);
+    if (xIsNext) {
+      nextSquares[i] = 'X';
+    } else {
+      nextSquares[i] = 'O';
+    }
+    onPlay(nextSquares);
   }
 
-  // 승자 계산
-  const winner: string | null = calculateWinner(squares);
-  // 게임 상태 메시지
+  const winner = calculateWinner(squares);
   let status: string;
-
   if (winner) {
-    status = `Winner: ${winner}`;
+    status = 'Winner: ' + winner;
   } else {
-    status = `Next player: ${xIsNext ? 'X' : 'O'}`;
+    status = 'Next player: ' + (xIsNext ? 'X' : 'O');
   }
 
   return (
     <>
-      {/* 게임 상태 표시 */}
       <div className="status">{status}</div>
-      {/* 게임 보드 렌더링 */}
       <div className="board-row">
         <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
         <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
@@ -69,9 +68,62 @@ export default function Board() {
   );
 }
 
+
+
+export default function Game() {
+  // 게임 히스토리를 저장하는 상태
+  const [history, setHistory] = useState<Array<Array<string | null>>>([Array(9).fill(null)]);
+  // 현재 이동(턴) 번호를 저장하는 상태
+  const [currentMove, setCurrentMove] = useState(0);
+  // 현재 플레이어가 X인지 결정 (짝수 턴이면 X, 홀수 턴이면 O)
+  const xIsNext = currentMove % 2 === 0;
+  // 현재 게임 보드 상태
+  const currentSquares = history[currentMove];
+
+  // 플레이어가 움직임을 수행했을 때 호출되는 함수
+  function handlePlay(nextSquares: Array<string | null>) {
+    // 현재 이동까지의 히스토리에 새로운 보드 상태를 추가
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    setHistory(nextHistory);
+    // 현재 이동을 새 히스토리의 마지막 인덱스로 설정
+    setCurrentMove(nextHistory.length - 1);
+  }
+
+  // 특정 이동으로 점프하는 함수
+  function jumpTo(nextMove: number) {
+    setCurrentMove(nextMove);
+  }
+
+  // 이동 히스토리를 표시하는 버튼 목록 생성
+  const moves = history.map((squares, move) => {
+    let description: string;
+    if (move > 0) {
+      description = 'Go to move #' + move;
+    } else {
+      description = 'Go to game start';
+    }
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className="game-info">
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  );
+}
+
 // 승자를 계산하는 함수
-function calculateWinner(squares: string[]): string | null {
-  // 승리 조건을 나타내는 배열
+function calculateWinner(squares: Array<string | null>): string | null {
+  // 승리 조건을 나타내는 라인들
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -80,9 +132,9 @@ function calculateWinner(squares: string[]): string | null {
     [1, 4, 7],
     [2, 5, 8],
     [0, 4, 8],
-    [2, 4, 6]
+    [2, 4, 6],
   ];
-  // 모든 승리 조건을 검사
+  // 모든 승리 조건을 확인
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
     // 세 칸이 모두 같은 플레이어로 채워져 있으면 해당 플레이어가 승자
@@ -92,10 +144,4 @@ function calculateWinner(squares: string[]): string | null {
   }
   // 승자가 없으면 null 반환
   return null;
-}
-
-// Square 컴포넌트 정의
-function Square({ value, onSquareClick }: SquareProps) {
-  // 버튼을 렌더링하고 onClick 이벤트에 onSquareClick 함수 할당
-  return <button className="square" onClick={onSquareClick}>{value}</button>;
 }

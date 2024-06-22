@@ -1,20 +1,76 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.game {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.game-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .board-row {
   display: flex;
 }
 
 .square {
-  width: 60px;
-  height: 60px;
-  margin: 0px;
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 60px;
-  text-align: center;
   background: #fff;
   border: 1px solid #999;
-  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  width: 34px;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
 }
 
 .square:focus {
   outline: none;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+
+.game-info {
+  margin-left: 20px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.game-info ol {
+  list-style-type: none;
+  padding: 0;
+}
+
+.game-info li {
+  margin-bottom: 5px;
+}
+
+.game-info button {
+  width: 100%;
+  padding: 5px;
+  text-align: left;
 }
